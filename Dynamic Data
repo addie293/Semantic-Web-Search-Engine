@@ -1,0 +1,57 @@
+package semweb;
+
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.io.InputStreamReader;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdfconnection.RDFConnection;
+import org.apache.jena.rdfconnection.RDFConnectionFactory;
+
+public class Main {
+private static final String GET_URL = "https://www.data.gouv.fr/fr/datasets/r/c9d58faa-54ca-4363-ab6f-30f3a2544fdd";
+private static final String USER_AGENT = null;
+
+public static void main(String[] args) throws IOException {
+           
+Model model = ModelFactory.createDefaultModel();
+model = sendGET();
+String datasetURL = "http://localhost:3030/adi";
+String sparqlEndpoint = datasetURL + "/sparql";
+String sparqlUpdate = datasetURL + "/update";
+String graphStore = datasetURL + "/data";
+RDFConnection conneg = RDFConnectionFactory.connect(sparqlEndpoint, sparqlUpdate, graphStore);
+conneg.load(model);
+
+model.write(System.out, "Turtle");
+System.out.println("GET DONE");
+}
+
+private static Model sendGET() throws IOException {
+Model response = ModelFactory.createDefaultModel();
+URL obj = new URL(GET_URL);
+HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+con.setRequestMethod("GET");
+con.setRequestProperty("User-Agent", USER_AGENT);
+int responseCode = con.getResponseCode();
+System.out.println("GET Response Code :: " + responseCode);
+if (responseCode == HttpURLConnection.HTTP_OK) { // success
+BufferedReader in = new BufferedReader(new InputStreamReader(
+con.getInputStream()));
+String inputLine;
+while ((inputLine = in.readLine()) != null) {
+response.append(inputLine);
+}
+in.close();
+
+}
+return response;
+}
+
+}
